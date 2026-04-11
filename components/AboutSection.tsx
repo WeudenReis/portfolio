@@ -7,17 +7,17 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 gsap.registerPlugin(ScrollTrigger);
 
 const skills = [
-  { name: "React / Next.js", level: 95 },
-  { name: "TypeScript", level: 90 },
-  { name: "Node.js", level: 80 },
-  { name: "Tailwind CSS", level: 95 },
-  { name: "GSAP / Animações", level: 85 },
-  { name: "APIs REST / GraphQL", level: 80 },
+  { name: "Python", level: 80 },
+  { name: "JavaScript", level: 75 },
+  { name: "HTML / CSS", level: 85 },
+  { name: "APIs REST / SaaS", level: 80 },
+  { name: "Git / Linux", level: 70 },
+  { name: "Kubernetes", level: 50 },
 ];
 
 const stats = [
-  { value: "7+", label: "Anos de experiência" },
-  { value: "20+", label: "Projetos entregues" },
+  { value: "4+", label: "Anos de experiência" },
+  { value: "3+", label: "Projetos entregues" },
   { value: "100%", label: "Foco em resultado" },
 ];
 
@@ -137,21 +137,21 @@ export default function AboutSection() {
 
             <div className="about-text space-y-5 text-white/45 leading-[1.8] text-[15px]">
               <p style={{ opacity: 0 }}>
-                Engenheiro de Software com foco em produtos financeiros, criando
-                soluções{" "}
-                <span className="text-white/80 font-medium">UX driven</span>{" "}
-                para dashboards de gestão e operações em tempo real.
+                Graduando em Engenharia de Software na UNIGOIÁS, com experiência
+                em{" "}
+                <span className="text-white/80 font-medium">suporte técnico</span>{" "}
+                e integrações via API em plataformas SaaS.
               </p>
               <p style={{ opacity: 0 }}>
-                <span className="text-accent font-semibold">7 anos</span>{" "}
-                construindo produtos de alta confiabilidade — da ideação ao
-                deploy — com experiência intuitiva para tomada de decisão.
+                <span className="text-accent font-semibold">4 anos</span>{" "}
+                de vivência em tecnologia — de manutenção de hardware a
+                suporte avançado com APIs, Kubernetes e automação.
               </p>
               <p style={{ opacity: 0 }}>
-                Plataformas de automação de gastos e controle de estoque que
-                aumentaram produtividade em{" "}
-                <span className="text-white/70">40%</span> e reduziram ruído
-                de dados operacionais.
+                Experiência com onboarding técnico, diagnóstico de integrações
+                e colaboração com times de desenvolvimento para{" "}
+                <span className="text-white/70">resolver problemas</span> e
+                otimizar processos.
               </p>
             </div>
 
@@ -197,7 +197,7 @@ export default function AboutSection() {
               <div className="absolute bottom-6 left-6 right-6">
                 <p className="text-white/70 text-sm font-medium">Weuden Reis</p>
                 <p className="text-white/30 text-xs">
-                  Software Engineer & Product Builder
+                  Graduando em Engenharia de Software
                 </p>
               </div>
             </div>

@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Weuden Reis - Software Engineer",
-  description: "Portfolio profissional de Weuden Reis. Engenheiro de Software focado em interfaces intuitivas e automação.",
+  title: "Weuden Reis - Graduando em Engenharia de Software",
+  description: "Portfolio profissional de Weuden Reis. Graduando em Engenharia de Software com experiência em suporte técnico, APIs REST e automação.",
 };
 
 export default function RootLayout({

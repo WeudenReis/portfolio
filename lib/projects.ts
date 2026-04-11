@@ -25,44 +25,34 @@ export interface Project {
  */
 export const projects: Project[] = [
   {
-    title: "Controle Financeiro Iota",
+    title: "Trelado",
     description:
-      "Dashboard de gestão financeira pessoal com visualização de dados em tempo real, utilizando Open Finance API para automação completa de gastos e receitas.",
-    link: "https://controle-financeiro-iota-navy.vercel.app",
-    repo: "https://github.com/weudenreis/controle-financeiro",
-    image: "/projects/finance.jpg",
-    tags: ["Next.js", "TypeScript", "Tailwind", "Open Finance"],
+      "Gerenciador de tarefas estilo Kanban com drag-and-drop e colunas customizáveis para organização de fluxos de trabalho.",
+    link: "#",
+    repo: "https://github.com/weudenreis/trelado",
+    image: "/projects/trelado.jpg",
+    tags: ["JavaScript", "HTML5", "CSS3"],
     color: "#f59e0b",
   },
   {
-    title: "Controle de Vendas WC",
+    title: "Portfólio Pessoal",
     description:
-      "Plataforma de gestão comercial para controle de estoque, fluxo de caixa e relatórios de vendas com UX intuitiva para alta produtividade operacional.",
-    link: "https://controledevendaswc.vercel.app",
-    repo: "https://github.com/weudenreis/controle-vendas",
-    image: "/projects/vendas.jpg",
-    tags: ["React", "Node.js", "Dashboard", "UX"],
-    color: "#3b82f6",
-  },
-  {
-    title: "Gestão de Desempenho Sinta",
-    description:
-      "Solução de gerenciamento de performance com dashboard acionável e kit de automações para times de produto atingirem metas consistentes.",
-    link: "#",
-    repo: "https://github.com/weudenreis/gestao-sinta",
-    image: "/projects/sinta.jpg",
-    tags: ["React", "Automação", "Analytics", "Charts"],
-    color: "#10b981",
-  },
-  {
-    title: "Portfolio Pessoal",
-    description:
-      "Este portfólio — construído com Next.js, GSAP e scroll híbrido horizontal/vertical. Performance first com animações a 60fps.",
+      "Site construído do zero para apresentar projetos e habilidades profissionais de forma moderna e responsiva.",
     link: "#",
     repo: "https://github.com/weudenreis/portfolio",
     image: "/projects/portfolio.jpg",
-    tags: ["Next.js", "GSAP", "Tailwind", "ScrollTrigger"],
+    tags: ["HTML5", "CSS3", "JavaScript"],
     color: "#8b5cf6",
+  },
+  {
+    title: "Controle de Pratas",
+    description:
+      "Sistema CRUD para cadastro e controle de estoque de peças de prata com gerenciamento completo de inventário.",
+    link: "#",
+    repo: "https://github.com/weudenreis/controle-pratas",
+    image: "/projects/pratas.jpg",
+    tags: ["Python", "Banco de Dados", "CRUD"],
+    color: "#3b82f6",
   },
 ];
 

@@ -180,7 +180,7 @@ export default function HeroSection() {
                 sequence={[
                   "Weuden Reis",
                   3000,
-                  "Software Engineer",
+                  "Engenheiro de Software",
                   2000,
                   "Weuden Reis",
                   4000,
@@ -203,8 +203,8 @@ export default function HeroSection() {
           className="text-base md:text-lg lg:text-xl text-white/40 max-w-lg leading-relaxed font-light mt-6 mb-10"
           style={{ opacity: 0 }}
         >
-          Construo interfaces que{" "}
-          <span className="text-white/70 font-normal">encantam</span> e
+          Resolvo problemas com{" "}
+          <span className="text-white/70 font-normal">tecnologia</span> e
           automatizo o que{" "}
           <span className="text-accent/80 font-normal">importa</span>.
         </p>

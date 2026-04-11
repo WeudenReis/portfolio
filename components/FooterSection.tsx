@@ -131,11 +131,11 @@ export default function FooterSection() {
         {/* Email CTA */}
         <div className="contact-cta mb-12" style={{ opacity: 0 }}>
           <a
-            href="mailto:weudenreis@gmail.com"
+            href="mailto:weudenfilho@gmail.com"
             className="magnetic-btn text-sm md:text-base py-4 px-8 md:px-10 inline-flex items-center gap-3 group"
           >
             <Mail className="w-4 h-4" />
-            <span>weudenreis@gmail.com</span>
+            <span>weudenfilho@gmail.com</span>
             <Send className="w-4 h-4 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform duration-300" />
           </a>
         </div>
