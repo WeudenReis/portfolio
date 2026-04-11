@@ -1,8 +1,5 @@
 {
   "framework": "nextjs",
   "buildCommand": "next build",
-  "outputDirectory": ".next",
-  "deploymentProtection": {
-    "standard": "none"
-  }
+  "outputDirectory": ".next"
 }
