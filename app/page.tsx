@@ -1,23 +1,25 @@
-"use client";
-
 import Navbar from "@/components/Navbar";
-import CustomCursor from "@/components/CustomCursor";
-import HeroSection from "@/components/HeroSection";
-import ProjectsSection from "@/components/ProjectsSection";
-import AboutSection from "@/components/AboutSection";
-import ExperienceSection from "@/components/ExperienceSection";
-import FooterSection from "@/components/FooterSection";
+import Hero from "@/components/Hero";
+import SobreMim from "@/components/SobreMim";
+import Stacks from "@/components/Stacks";
+import Projetos from "@/components/Projetos";
+import Trajetoria from "@/components/Trajetoria";
+import Stats from "@/components/Stats";
+import Contato from "@/components/Contato";
 
 export default function Home() {
   return (
-    <div style={{ overflowX: 'clip' }}>
-      <CustomCursor />
+    <>
       <Navbar />
-      <HeroSection />
-      <ProjectsSection />
-      <AboutSection />
-      <ExperienceSection />
-      <FooterSection />
-    </div>
+      <main className="overflow-x-clip">
+        <Hero />
+        <SobreMim />
+        <Stacks />
+        <Projetos />
+        <Trajetoria />
+        <Stats />
+      </main>
+      <Contato />
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const geist = Geist({
@@ -12,9 +13,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Virgil, a letra "feita à mão" do Excalidraw (OFL 1.1), a mesma dos desenhos do README
+const virgil = localFont({
+  src: "../public/fonts/Virgil.woff2",
+  variable: "--font-virgil",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Weuden Reis - Graduando em Engenharia de Software",
-  description: "Portfolio profissional de Weuden Reis. Graduando em Engenharia de Software com experiência em suporte técnico, APIs REST e automação.",
+  title: "Weuden Reis · Software Engineer",
+  description:
+    "Extensões, automações e produtos web que resolvem problema de verdade. Software Engineer na chatPro, em Goiânia, GO.",
 };
 
 export default function RootLayout({
@@ -24,10 +33,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR">
-      <body className={`${geist.variable} ${geistMono.variable} grain`}>
-        <main className="min-h-screen relative">
-          {children}
-        </main>
+      <body className={`${geist.variable} ${geistMono.variable} ${virgil.variable} font-sans`}>
+        {children}
       </body>
     </html>
   );

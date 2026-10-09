@@ -7,28 +7,24 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["JetBrains Mono", "Fira Code", "monospace"],
+        sans: ["var(--font-geist-sans)", "system-ui", "sans-serif"],
+        mono: ["var(--font-geist-mono)", "ui-monospace", "monospace"],
+        mao: ["var(--font-virgil)", "Comic Sans MS", "cursive"],
       },
       colors: {
-        bg: "#06080f",
-        surface: "rgba(255, 255, 255, 0.03)",
-        accent: {
-          DEFAULT: "#f59e0b",
-          light: "#fbbf24",
-          dark: "#d97706",
-          glow: "rgba(245, 158, 11, 0.15)",
+        // mesma paleta dos desenhos do README do perfil
+        tinta: "#1e1e1e",
+        laranja: {
+          DEFAULT: "#FF7A33",
+          texto: "#C2410C",
+          claro: "#FFF7ED",
         },
+        cinza: "#59636e",
       },
-      animation: {
-        "float": "float 6s ease-in-out infinite",
-        "pulse-slow": "pulse 4s ease-in-out infinite",
-      },
-      keyframes: {
-        float: {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-20px)" },
-        },
+      boxShadow: {
+        brutal: "6px 6px 0 0 #1e1e1e",
+        "brutal-sm": "3px 3px 0 0 #1e1e1e",
+        "brutal-lg": "10px 10px 0 0 #1e1e1e",
       },
     },
   },
