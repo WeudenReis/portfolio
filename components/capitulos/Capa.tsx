@@ -11,7 +11,7 @@ export default function Capa() {
   return (
     <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-center px-4 pb-16 pr-10 sm:px-8 sm:pr-14">
       <p className="etiqueta mb-10 self-start sm:mb-12">
-        <span className="h-2 w-2 rounded-full bg-laranja" /> Goiânia, GO · Software Engineer na chatPro
+        <span className="h-2 w-2 rounded-full bg-laranja" /> Goiânia, GO · Software Engineer
       </p>
 
       <div className="relative rounded-[1.75rem] border-[3px] border-tinta bg-laranja px-5 py-7 shadow-brutal-lg sm:px-10 sm:py-10">
