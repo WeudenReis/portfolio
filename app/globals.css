@@ -4,11 +4,11 @@
 
 :root {
   color-scheme: light;
+  --nav: 4rem;
 }
 
 html {
-  scroll-behavior: smooth;
-  scroll-padding-top: 6rem;
+  scroll-padding-top: calc(var(--nav) + 1rem);
 }
 
 body {
@@ -40,6 +40,10 @@ body {
     @apply botao bg-laranja;
   }
 
+  .botao-tinta {
+    @apply botao bg-tinta text-white;
+  }
+
   /* destaque de termo, como os `code` do README */
   .termo {
     @apply rounded-md border-2 border-tinta bg-laranja-claro px-1.5 py-px
@@ -47,14 +51,83 @@ body {
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
+
+  .etiqueta {
+    @apply inline-flex items-center gap-1 rounded-md border-2 border-tinta bg-white px-2 py-0.5 text-xs font-bold;
+  }
 }
 
+/* ---------- marca-texto: só a metade de baixo das letras ---------- */
+.marca {
+  --cor-marca: #ff7a33;
+  background-image: linear-gradient(
+    176deg,
+    transparent 52%,
+    var(--cor-marca) 52%,
+    var(--cor-marca) 90%,
+    transparent 90%
+  );
+  background-repeat: no-repeat;
+  background-size: 0% 100%;
+  padding: 0 0.12em;
+  margin: 0 -0.06em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-size 0.9s cubic-bezier(0.22, 0.8, 0.25, 1);
+}
+.marca-creme { --cor-marca: #ffd9bf; }
+.marca-branco { --cor-marca: #ffffff; }
+.marca-visivel { background-size: 100% 100%; }
+
+/* ---------- palavra riscada e apagadinha ---------- */
+.riscado {
+  position: relative;
+  display: inline-block;
+  color: #9a9fa6;
+  white-space: nowrap;
+}
+.riscado del { text-decoration: none; }
+.riscado svg {
+  position: absolute;
+  left: -4%;
+  top: 22%;
+  width: 108%;
+  height: 60%;
+  overflow: visible;
+  pointer-events: none;
+}
+.riscado path {
+  fill: none;
+  stroke: #1e1e1e;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.5s ease-out;
+}
+.riscado path + path { stroke: #c2410c; stroke-width: 1.8; }
+.riscado path.riscado-desenhado { stroke-dashoffset: 0; }
+
+/* ---------- texto digitando ---------- */
+.digitando-cursor {
+  display: inline-block;
+  width: 0.09em;
+  min-width: 3px;
+  height: 0.95em;
+  margin-left: 0.08em;
+  vertical-align: -0.1em;
+  background: #ff7a33;
+  animation: piscar 1s steps(2, start) infinite;
+}
+@keyframes piscar { to { visibility: hidden; } }
+
+/* ---------- mão acenando ---------- */
 .aceno {
   display: inline-block;
   transform-origin: 70% 70%;
   animation: aceno 2.4s ease-in-out infinite;
 }
-
 @keyframes aceno {
   0%, 60%, 100% { transform: rotate(0deg); }
   10%, 30% { transform: rotate(14deg); }
@@ -63,7 +136,105 @@ body {
   50% { transform: rotate(10deg); }
 }
 
+/* ---------- letras que a cobrinha da capa come ---------- */
+.letra-comivel {
+  display: inline-block;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s;
+}
+.letra-comida {
+  transform: scale(0) rotate(-25deg);
+  opacity: 0;
+  transition: transform 0.12s ease-in, opacity 0.12s;
+}
+
+/* ---------- logo </> que vira bonequinho e dá tchau ----------
+   "<" gira e vira as pernas, "/" fica em pé e vira o corpo, ">" gira e vira os braços,
+   nasce a cabeça, os braços abanam e tudo volta a ser </>. Ciclo de 7 s. */
+.logo-tchau svg * { transform-box: view-box; }
+.logo-tchau .lt-menor { transform-origin: 12px 50px; animation: lt-menor 7s ease-in-out infinite; }
+.logo-tchau .lt-barra { transform-origin: 50px 50px; animation: lt-barra 7s ease-in-out infinite; }
+.logo-tchau .lt-maior { transform-origin: 88px 50px; animation: lt-maior 7s ease-in-out infinite; }
+.logo-tchau .lt-cabeca { transform-origin: 50px 27px; animation: lt-cabeca 7s ease-in-out infinite; }
+.logo-tchau .lt-bracos { transform-origin: 50px 52px; animation: lt-bracos 7s ease-in-out infinite; }
+
+@keyframes lt-menor {
+  0%, 18%, 92%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+  25%, 86% { transform: translate(-7px, 0px) rotate(0deg) scale(1); }
+  33%, 80% { transform: translate(38px, 22px) rotate(90deg) scale(0.8); }
+}
+@keyframes lt-barra {
+  0%, 18%, 92%, 100% { transform: translate(0px, 0px) scale(1, 1) rotate(0deg); }
+  25%, 86% { transform: translate(0px, 0px) scale(1, 1) rotate(8deg); }
+  33%, 80% { transform: translate(0px, 6px) scale(1, 0.55) rotate(-16deg); }
+}
+@keyframes lt-maior {
+  0%, 18%, 92%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
+  25%, 86% { transform: translate(7px, 0px) rotate(0deg) scale(1); }
+  33%, 80% { transform: translate(-38px, 2px) rotate(90deg) scale(0.9); }
+}
+@keyframes lt-cabeca {
+  0%, 26%, 84%, 100% { transform: scale(0); opacity: 0; }
+  34% { transform: scale(1.18); opacity: 1; }
+  38%, 78% { transform: scale(1); opacity: 1; }
+}
+@keyframes lt-bracos {
+  0%, 34%, 78%, 100% { transform: rotate(0deg); }
+  40%, 52%, 64% { transform: rotate(14deg); }
+  46%, 58%, 70% { transform: rotate(-10deg); }
+  75% { transform: rotate(4deg); }
+}
+
+/* ---------- o bonequinho </> que acompanha a leitura (components/Mascote.tsx) ---------- */
+.mascote { pointer-events: auto; cursor: pointer; overflow: visible; }
+.mascote line { fill: none; stroke: #1e1e1e; stroke-width: 6; stroke-linecap: round; }
+.mascote .m-tronco-contorno { stroke-width: 11; }
+.mascote .m-tronco { stroke: #ff7a33; stroke-width: 5.5; }
+.mascote .m-rosto { fill: #ff7a33; stroke: #1e1e1e; stroke-width: 4; }
+.mascote .m-olhos circle { fill: #1e1e1e; }
+.mascote .m-boca { fill: none; stroke: #1e1e1e; stroke-width: 2; stroke-linecap: round; }
+.mascote g { transform-box: view-box; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.mascote .m-braco { transform-origin: 30px 37px; }
+.mascote .m-perna { transform-origin: 30px 58px; }
+.mascote .m-cabeca { transform-origin: 30px 28px; }
+.mascote .m-olhos { transform-origin: 30px 17px; transition: none; animation: m-piscar 4.2s infinite; }
+@keyframes m-piscar { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+
+/* sentado na beirada: pernas penduradas balançando, mãos apoiadas */
+.pose-sentado .m-perna-esq { animation: m-balanco-esq 1.4s ease-in-out infinite; }
+.pose-sentado .m-perna-dir { animation: m-balanco-dir 1.4s ease-in-out infinite; }
+.pose-sentado .m-braco-esq { transform: rotate(-22deg); }
+.pose-sentado .m-braco-dir { transform: rotate(22deg); }
+@keyframes m-balanco-esq { 0%, 100% { transform: rotate(2deg) scaleY(0.62); } 50% { transform: rotate(16deg) scaleY(0.62); } }
+@keyframes m-balanco-dir { 0%, 100% { transform: rotate(-16deg) scaleY(0.62); } 50% { transform: rotate(-2deg) scaleY(0.62); } }
+
+/* acenando: braço direito abanando */
+.pose-acenando .m-braco-dir { animation: m-acenar 0.45s ease-in-out infinite alternate; }
+.pose-acenando .m-braco-esq { transform: rotate(-8deg); }
+@keyframes m-acenar { from { transform: rotate(-100deg); } to { transform: rotate(-140deg); } }
+
+/* apontando: braço direito esticado na horizontal, com um toquinho */
+.pose-apontando .m-braco-dir { animation: m-apontar 0.7s ease-in-out infinite alternate; }
+.pose-apontando .m-braco-esq { transform: rotate(-30deg); }
+.pose-apontando .m-cabeca { transform: rotate(8deg); }
+@keyframes m-apontar { from { transform: rotate(-44deg); } to { transform: rotate(-34deg); } }
+
+/* pulando: braços para cima, pernas encolhidas */
+.pose-pulando .m-braco-esq { transform: rotate(115deg); }
+.pose-pulando .m-braco-dir { transform: rotate(-115deg); }
+.pose-pulando .m-perna-esq { transform: rotate(28deg) scaleY(0.75); }
+.pose-pulando .m-perna-dir { transform: rotate(-28deg) scaleY(0.75); }
+
+/* espiando pela beirada da tela */
+.pose-espiando .m-braco-esq { transform: rotate(80deg); }
+.pose-espiando .m-braco-dir { animation: m-acenar 0.6s ease-in-out infinite alternate; }
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
-  .aceno { animation: none; }
+  .aceno, .digitando-cursor, .logo-tchau svg * { animation: none !important; }
+  .marca { transition: none; }
+  .riscado path { transition: none; }
 }

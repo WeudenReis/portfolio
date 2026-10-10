@@ -1,33 +1,25 @@
-// Título de seção no traço dos desenhos do README: letra Virgil com sublinhado laranja à mão.
-export default function Titulo({ children, id }: { children: React.ReactNode; id?: string }) {
+import MarcaTexto from "./MarcaTexto";
+
+// Título de seção no traço do README: letra Virgil com marca-texto laranja na metade de baixo.
+export default function Titulo({
+  children,
+  id,
+  alinhar = "centro",
+  cor = "laranja",
+}: {
+  children: React.ReactNode;
+  id?: string;
+  alinhar?: "centro" | "esquerda";
+  cor?: "laranja" | "creme" | "branco";
+}) {
   return (
-    <h2 id={id} className="mb-10 flex justify-center">
-      <span className="relative inline-block px-2 font-mao text-4xl text-tinta sm:text-5xl">
-        {children}
-        <svg
-          className="absolute -bottom-3 left-0 h-3 w-full overflow-visible"
-          viewBox="0 0 100 10"
-          preserveAspectRatio="none"
-          aria-hidden="true"
-        >
-          <path
-            d="M1 6 C 20 8, 38 9, 52 5 S 82 4, 99 7"
-            fill="none"
-            stroke="#FF7A33"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          />
-          <path
-            d="M3 7.5 C 25 9, 45 7, 60 6.5 S 85 6, 97 8"
-            fill="none"
-            stroke="#FF7A33"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            vectorEffect="non-scaling-stroke"
-          />
-        </svg>
-      </span>
+    <h2
+      id={id}
+      className={`mb-8 font-mao text-4xl leading-tight text-tinta sm:text-5xl ${
+        alinhar === "centro" ? "text-center" : ""
+      }`}
+    >
+      <MarcaTexto cor={cor}>{children}</MarcaTexto>
     </h2>
   );
 }
