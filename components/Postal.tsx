@@ -7,14 +7,13 @@ import { contato } from "@/lib/dados";
 // Cartão-postal: o formulário não manda nada sozinho, ele abre o e-mail da pessoa já preenchido.
 export default function Postal() {
   const [nome, setNome] = useState("");
-  const [assunto, setAssunto] = useState("Projeto");
   const [mensagem, setMensagem] = useState("");
   const [enviado, setEnviado] = useState(false);
 
   const enviar = (e: React.FormEvent) => {
     e.preventDefault();
     const corpo = `${mensagem}\n\n${nome}`;
-    window.location.href = `mailto:${contato.email}?subject=${encodeURIComponent(`[${assunto}] Recado do site`)}&body=${encodeURIComponent(corpo)}`;
+    window.location.href = `mailto:${contato.email}?subject=${encodeURIComponent(`Recado do site, de ${nome}`)}&body=${encodeURIComponent(corpo)}`;
     setEnviado(true);
   };
 
@@ -23,7 +22,7 @@ export default function Postal() {
       <div className="grid gap-6 md:grid-cols-[3fr_2fr]">
         <div>
           <label htmlFor="mensagem" className="font-mao text-lg text-cinza">
-            Oi Weuden, ...
+            Oi, Weuden...
           </label>
           <textarea
             id="mensagem"
@@ -31,7 +30,7 @@ export default function Postal() {
             rows={8}
             value={mensagem}
             onChange={(e) => setMensagem(e.target.value)}
-            placeholder="Tenho um problema na operação que dá pra automatizar..."
+            placeholder="Conta o que você precisa: um site, uma automação, um sistema..."
             className="mt-2 w-full resize-none bg-[repeating-linear-gradient(transparent,transparent_31px,#1e1e1e22_31px,#1e1e1e22_32px)] font-mao text-xl leading-8 outline-none placeholder:text-cinza/60"
           />
         </div>
@@ -58,22 +57,6 @@ export default function Postal() {
               className="mt-1 w-full border-b-2 border-tinta bg-transparent py-1 font-mao text-xl outline-none focus:border-laranja-texto"
             />
           </div>
-          <fieldset>
-            <legend className="text-xs font-bold uppercase tracking-widest text-cinza">Assunto</legend>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {["Projeto", "Vaga", "Só um oi"].map((a) => (
-                <button
-                  type="button"
-                  key={a}
-                  onClick={() => setAssunto(a)}
-                  aria-pressed={assunto === a}
-                  className={`etiqueta ${assunto === a ? "bg-laranja" : ""}`}
-                >
-                  {a}
-                </button>
-              ))}
-            </div>
-          </fieldset>
           <button type="submit" className="botao-tinta mt-auto justify-center">
             <PaperPlaneTilt className="h-4 w-4" weight="bold" /> Mandar o postal
           </button>

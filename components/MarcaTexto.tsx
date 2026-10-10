@@ -1,6 +1,7 @@
 "use client";
 
 import { useNaTela } from "@/lib/useNaTela";
+import { useCapituloAtivo } from "./Rasgo";
 
 // Marca-texto que pinta só a metade de baixo das letras, passando da esquerda para a direita
 // quando o texto aparece na tela.
@@ -13,7 +14,10 @@ export default function MarcaTexto({
   cor?: "laranja" | "creme" | "branco";
   atraso?: number;
 }) {
-  const [ref, visto] = useNaTela<HTMLSpanElement>();
+  const [ref, naTela] = useNaTela<HTMLSpanElement>();
+  const ativo = useCapituloAtivo();
+  // na capa, espera o capítulo dele aparecer (os capítulos ficam empilhados na mesma tela)
+  const visto = naTela && ativo;
   return (
     <span
       ref={ref}

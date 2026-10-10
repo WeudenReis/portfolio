@@ -38,8 +38,6 @@ export default function ModoCobra() {
   const tela = useRef<HTMLCanvasElement>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const caminhoAtual = useRef(pathname);
-  caminhoAtual.current = pathname;
   const navegar = useRef(router.push);
   navegar.current = router.push;
   const motor = useRef<{ trocouPagina: () => void } | null>(null);
@@ -82,13 +80,22 @@ export default function ModoCobra() {
     const farelos: Farelo[] = [];
     const raio = W < 640 ? 8 : 10;
 
-    const corDeFundo = (el: Element | null): string => {
+    // cor do fundo atrás da letra; null quando há imagem ou gradiente (marca-texto, grifo):
+    // cobrir com uma cor só abriria um buraco no destaque, então essas letras ficam de fora
+    const corDeFundo = (el: Element | null): string | null => {
       while (el) {
-        const c = getComputedStyle(el).backgroundColor;
+        const st = getComputedStyle(el);
+        if (st.backgroundImage && st.backgroundImage !== "none") return null;
+        const c = st.backgroundColor;
         if (c && c !== "transparent" && !c.endsWith(", 0)")) return c;
         el = el.parentElement;
       }
       return "#ffffff";
+    };
+    const coresDoPai = new WeakMap<Element, string | null>();
+    const corDoPai = (el: Element) => {
+      if (!coresDoPai.has(el)) coresDoPai.set(el, corDeFundo(el));
+      return coresDoPai.get(el)!;
     };
 
     const escanear = () => {
@@ -99,7 +106,7 @@ export default function ModoCobra() {
       const sx = window.scrollX, sy = window.scrollY;
       for (let no = andador.nextNode() as Text | null; no; no = andador.nextNode() as Text | null) {
         const pai = no.parentElement;
-        if (!pai || !no.data.trim() || pai.closest(IGNORAR)) continue;
+        if (!pai || !no.data.trim() || pai.closest(IGNORAR) || corDoPai(pai) === null) continue;
         const caixa = pai.getBoundingClientRect();
         if (caixa.bottom < 0 || caixa.top > H || caixa.right < 0 || caixa.left > W || caixa.width === 0) continue;
         for (let i = 0; i < no.data.length; i++) {
@@ -129,6 +136,15 @@ export default function ModoCobra() {
     let empurrando = 0;
     let chegandoPor: 1 | -1 | 0 = 0;
     let indo = "";
+    let total = 0; // letras comidas desde que foi solta (não zera ao trocar de página)
+    let navegando = 0; // momento em que pediu para trocar de página (0 = parado)
+    let destinoChegada = "";
+    const timers: number[] = [];
+    // piloto automático: letra que está caçando e as que desistiu por um tempo
+    let alvoChave = "";
+    let alvoMelhor = Infinity;
+    let alvoDesde = 0;
+    const desistiu = new Map<string, number>();
 
     const corpo = (n: number): Ponto[] => {
       const pts: Ponto[] = [rastro[0]];
@@ -154,7 +170,8 @@ export default function ModoCobra() {
     const posAtual = (l: Letra) => ({ x: l.x - (window.scrollX - l.sx), y: l.y - (window.scrollY - l.sy) });
 
     const comer = (l: Letra) => {
-      comidas.set(l.chave, { no: l.no, i: l.i, cor: corDeFundo(l.no.parentElement), visivel: true, checado: performance.now() });
+      comidas.set(l.chave, { no: l.no, i: l.i, cor: corDoPai(l.no.parentElement!) ?? "#ffffff", visivel: true, checado: performance.now() });
+      total++;
       som.mordida();
       letras = letras.filter((x) => x !== l);
       const p = posAtual(l);
@@ -163,7 +180,13 @@ export default function ModoCobra() {
     };
 
     const aoTeclar = (e: KeyboardEvent) => {
-      if (e.key === "Escape") return setAtivo(false);
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // com o jogo da cobrinha rodando, as setas são do jogo
+      if (document.documentElement.dataset.jogo === "rodando") return;
+      if (e.key === "Escape") {
+        if (document.querySelector("dialog[open]")) return; // o Esc fecha o modal, não guarda a cobra
+        return setAtivo(false);
+      }
       const mapa: Record<string, string> = {
         ArrowUp: "c", ArrowDown: "b", ArrowLeft: "e", ArrowRight: "d", w: "c", s: "b", a: "e", d: "d", W: "c", S: "b", A: "e", D: "d",
       };
@@ -186,6 +209,13 @@ export default function ModoCobra() {
       reescanear = window.setTimeout(escanear, ms);
     };
     const aoRolar = () => agendarEscaneio();
+    // janela perdeu o foco: solta as teclas (senão uma seta presa sai navegando sozinha)
+    const soltarTeclas = () => {
+      teclas.clear();
+      manual = { x: 0, y: 0 };
+      manualAte = 0;
+    };
+    const aoEsconder = () => document.hidden && soltarTeclas();
     const aoRedimensionar = () => {
       dimensionar();
       agendarEscaneio();
@@ -195,6 +225,8 @@ export default function ModoCobra() {
     window.addEventListener("keyup", aoTeclar, true);
     window.addEventListener("scroll", aoRolar, { passive: true });
     window.addEventListener("resize", aoRedimensionar);
+    window.addEventListener("blur", soltarTeclas);
+    document.addEventListener("visibilitychange", aoEsconder);
     const periodico = window.setInterval(escanear, 1500);
     escanear();
 
@@ -202,14 +234,23 @@ export default function ModoCobra() {
       trocouPagina: () => {
         comidas = new Map();
         letras = [];
-        rastro = [{ ...cabeca }];
+        alvoChave = "";
+        desistiu.clear();
         if (chegandoPor === 1) cabeca = { x: cabeca.x, y: 64 + raio * 3 };
         if (chegandoPor === -1) {
           cabeca = { x: cabeca.x, y: H - raio * 3 };
-          // chegou subindo: começa no fim da página anterior
-          for (const ms of [120, 450]) setTimeout(() => window.scrollTo(0, document.documentElement.scrollHeight), ms);
+          // chegou subindo: começa no fim da página anterior (só se ainda estiver nela)
+          const chegada = destinoChegada;
+          for (const ms of [120, 450])
+            timers.push(
+              window.setTimeout(() => {
+                if (window.location.pathname === chegada) window.scrollTo(0, document.documentElement.scrollHeight);
+              }, ms),
+            );
         }
+        rastro = [{ ...cabeca }];
         chegandoPor = 0;
+        navegando = 0;
         empurrando = 0;
         indo = "";
         agendarEscaneio(500);
@@ -217,9 +258,11 @@ export default function ModoCobra() {
     };
 
     const trocarDePagina = (dir: 1 | -1) => {
-      const i = indiceDaPagina(caminhoAtual.current);
+      const i = indiceDaPagina(window.location.pathname);
       const destino = PAGINAS[(i + dir + PAGINAS.length) % PAGINAS.length];
       chegandoPor = dir;
+      destinoChegada = destino.href;
+      navegando = performance.now();
       som.pagina();
       navegar.current(destino.href);
     };
@@ -245,19 +288,44 @@ export default function ModoCobra() {
         desejado = Math.atan2(manual.y, manual.x);
         virada = 10;
       } else {
+        // escolhe a letra pelo custo: distância, mais um peso para as que ficam atrás da cabeça
+        // (letra colada do lado fica dentro da curva e a cobra rodaria em volta para sempre)
         let melhor: Ponto | null = null;
+        let melhorChave = "";
         let menor = Infinity;
+        let distMelhor = Infinity;
         for (const l of letras) {
+          if ((desistiu.get(l.chave) ?? 0) > agora) continue;
           const p = posAtual(l);
           if (p.y < 0 || p.y > H) continue;
           const d = Math.hypot(p.x - cabeca.x, p.y - cabeca.y);
-          if (d < menor) {
-            menor = d;
+          let giro = Math.atan2(p.y - cabeca.y, p.x - cabeca.x) - ang;
+          giro = Math.abs(Math.atan2(Math.sin(giro), Math.cos(giro)));
+          const custo = d + giro * 70 + (l.chave === alvoChave ? -30 : 0);
+          if (custo < menor) {
+            menor = custo;
             melhor = p;
+            melhorChave = l.chave;
+            distMelhor = d;
           }
         }
-        if (melhor) desejado = Math.atan2(melhor.y - cabeca.y, melhor.x - cabeca.x);
-        else desejado = ang + Math.sin(agora / 700) * 0.9; // passeando
+        if (melhor) {
+          // não chegou mais perto em 1,2 s: desiste dessa letra por um tempo
+          if (melhorChave !== alvoChave) {
+            alvoChave = melhorChave;
+            alvoMelhor = distMelhor;
+            alvoDesde = agora;
+          } else if (distMelhor < alvoMelhor - 8) {
+            alvoMelhor = distMelhor;
+            alvoDesde = agora;
+          } else if (agora - alvoDesde > 1200) {
+            desistiu.set(alvoChave, agora + 6000);
+            alvoChave = "";
+          }
+          desejado = Math.atan2(melhor.y - cabeca.y, melhor.x - cabeca.x);
+          // perto do alvo, fecha a curva
+          if (distMelhor < 90) virada = 9;
+        } else desejado = ang + Math.sin(agora / 700) * 0.9; // passeando
         // foge das beiradas
         const m = 50;
         if (cabeca.x < m || cabeca.x > W - m || cabeca.y < m + 64 || cabeca.y > H - m)
@@ -267,7 +335,9 @@ export default function ModoCobra() {
       dif = Math.atan2(Math.sin(dif), Math.cos(dif));
       ang += Math.max(-virada * dt, Math.min(virada * dt, dif));
 
-      const vel = 190 + Math.min(140, comidas.size * 0.6);
+      // perto da letra caçada ela desacelera um pouco: a curva fica mais fechada
+      const pertoDoAlvo = !(agora < manualAte) && alvoChave && alvoMelhor < 70;
+      const vel = (190 + Math.min(140, total * 0.6)) * (pertoDoAlvo ? 0.6 : 1);
       cabeca = { x: cabeca.x + Math.cos(ang) * vel * dt, y: cabeca.y + Math.sin(ang) * vel * dt };
       const guiando = agora < manualAte && (manual.x !== 0 || manual.y !== 0);
       if (cabeca.x < raio || cabeca.x > W - raio) {
@@ -283,7 +353,8 @@ export default function ModoCobra() {
       const noTopo = guiando && manual.y < 0 && cabeca.y <= raio + 2;
       const noFundo = guiando && manual.y > 0 && cabeca.y >= H - raio - 2;
       indo = "";
-      if (noTopo || noFundo) {
+      if (navegando && agora - navegando > 5000) navegando = 0; // segurança se a navegação travar
+      if ((noTopo || noFundo) && !navegando) {
         const dir = noFundo ? 1 : -1;
         const fim = document.documentElement.scrollHeight - H;
         const podeRolar = dir === 1 ? window.scrollY < fim - 1 : window.scrollY > 0;
@@ -292,7 +363,7 @@ export default function ModoCobra() {
           empurrando = 0;
         } else {
           empurrando += dt;
-          const i = indiceDaPagina(caminhoAtual.current);
+          const i = indiceDaPagina(window.location.pathname);
           indo = PAGINAS[(i + dir + PAGINAS.length) % PAGINAS.length].nome;
           if (empurrando >= EMPURRAO) {
             empurrando = 0;
@@ -301,7 +372,7 @@ export default function ModoCobra() {
         }
       } else empurrando = 0;
       rastro.unshift({ ...cabeca });
-      const tamanho = Math.min(160, 12 + Math.floor(comidas.size * 0.5));
+      const tamanho = Math.min(160, 12 + Math.floor(total * 0.5));
       if (rastro.length > tamanho * 4) rastro.length = tamanho * 4;
 
       // comer
@@ -349,7 +420,7 @@ export default function ModoCobra() {
 
       if (agora - ultimoPlacar > 200) {
         ultimoPlacar = agora;
-        setPlacar({ comidas: comidas.size, naTela: letras.length, indo, forca: Math.min(1, empurrando / EMPURRAO) });
+        setPlacar({ comidas: total, naTela: letras.length, indo, forca: Math.min(1, empurrando / EMPURRAO) });
       }
     };
     quadro = requestAnimationFrame(loop);
@@ -362,10 +433,12 @@ export default function ModoCobra() {
       window.removeEventListener("keyup", aoTeclar, true);
       window.removeEventListener("scroll", aoRolar);
       window.removeEventListener("resize", aoRedimensionar);
+      window.removeEventListener("blur", soltarTeclas);
+      document.removeEventListener("visibilitychange", aoEsconder);
+      timers.forEach((id) => clearTimeout(id));
       motor.current = null;
       ctx.clearRect(0, 0, W, H);
 
-      const total = comidas.size;
       let recorde = 0;
       try {
         recorde = Number(localStorage.getItem(CHAVE_RECORDE) || 0);
@@ -374,8 +447,8 @@ export default function ModoCobra() {
       if (total > 0)
         setRecado(
           total > recorde
-            ? `Recorde! A cobrinha comeu ${total} letras. Elas já nasceram de novo.`
-            : `A cobrinha comeu ${total} letras. Elas já nasceram de novo.`,
+            ? `Recorde! A cobrinha comeu ${total} ${total === 1 ? "letra" : "letras"}. Já nasceram de novo.`
+            : `A cobrinha comeu ${total} ${total === 1 ? "letra" : "letras"}. Já nasceram de novo.`,
         );
     };
   }, [ativo]);
@@ -403,7 +476,7 @@ export default function ModoCobra() {
         {ativo ? (
           <div className="caixa flex flex-wrap items-center justify-between gap-3 px-4 py-3">
             <div className="font-mao text-lg leading-tight">
-              <span className="text-laranja-texto">{placar.comidas}</span> letras comidas
+              <span className="text-laranja-texto">{placar.comidas}</span> {placar.comidas === 1 ? "letra comida" : "letras comidas"}
               {placar.indo ? (
                 <span className="mt-1 block font-sans text-xs font-bold">
                   Continue empurrando para ir para {placar.indo}

@@ -59,7 +59,7 @@ export default function JogoCobra() {
     cel: 24,
   });
 
-  const intervalo = () => Math.max(62, 150 - (jogo.current.nivel - 1) * 11);
+  const intervalo = () => Math.max(58, 125 - (jogo.current.nivel - 1) * 9);
 
   const atualizarHud = useCallback(() => {
     const j = jogo.current;
@@ -69,6 +69,8 @@ export default function JogoCobra() {
   const mudarEstado = (e: Estado) => {
     jogo.current.estado = e;
     setEstado(e);
+    if (e === "jogando") document.documentElement.dataset.jogo = "rodando";
+    else delete document.documentElement.dataset.jogo;
   };
 
   const casaLivre = (proibidas: Casa[]): Casa => {
@@ -133,6 +135,11 @@ export default function JogoCobra() {
     if (d.x === -ultima.x && d.y === -ultima.y) return; // não dá meia-volta
     if (d.x === ultima.x && d.y === ultima.y) return;
     if (j.fila.length < 3) j.fila.push(d);
+    // resposta imediata: se já passou um pedaço do passo, anda agora em vez de esperar a próxima batida
+    if (j.fila.length === 1 && j.acumulado > intervalo() * 0.25) {
+      j.acumulado = 0;
+      passo();
+    }
   }, []);
 
   const pausar = useCallback(() => {
@@ -216,7 +223,7 @@ export default function JogoCobra() {
       j.vidas--;
       j.tremor = 1;
       farelos(cabeca, "#e11d48", 12);
-      som.errado();
+      if (j.vidas > 0) som.errado(); // na última vida toca só o fim de jogo
       // encolhe duas partes, mas nunca abaixo de 3
       for (let k = 0; k < 2 && j.cobra.length > 3; k++) j.cobra.pop();
       j.anterior = j.anterior.slice(0, j.cobra.length);
@@ -245,7 +252,9 @@ export default function JogoCobra() {
   useEffect(() => {
     const aoTeclar = (e: KeyboardEvent) => {
       const alvo = e.target as HTMLElement;
-      if (alvo.closest("input, textarea")) return;
+      if (alvo.closest("input, textarea") || e.ctrlKey || e.metaKey || e.altKey) return;
+      // Enter e espaço em link ou botão continuam sendo do link ou botão (menos no tabuleiro)
+      const interativo = alvo !== moldura.current && !!alvo.closest("a, button, summary, [role='button']");
       const dirs: Record<string, Casa> = {
         ArrowUp: { x: 0, y: -1 }, w: { x: 0, y: -1 }, W: { x: 0, y: -1 },
         ArrowDown: { x: 0, y: 1 }, s: { x: 0, y: 1 }, S: { x: 0, y: 1 },
@@ -256,12 +265,12 @@ export default function JogoCobra() {
       if (dirs[e.key] && est === "jogando") {
         e.preventDefault();
         virar(dirs[e.key]);
-      } else if (e.key === " " || e.key === "p" || e.key === "P") {
+      } else if (!interativo && (e.key === " " || e.key === "p" || e.key === "P")) {
         if (est === "jogando" || est === "pausado") {
           e.preventDefault();
           pausar();
         }
-      } else if (e.key === "Enter" && (est === "inicio" || est === "fim")) {
+      } else if (!interativo && e.key === "Enter" && (est === "inicio" || est === "fim")) {
         e.preventDefault();
         comecar();
       }
@@ -270,6 +279,9 @@ export default function JogoCobra() {
     window.addEventListener("keydown", aoTeclar, true);
     return () => window.removeEventListener("keydown", aoTeclar, true);
   }, [virar, pausar, comecar]);
+
+  // saiu da página no meio da partida: tira a marca de "jogo rodando"
+  useEffect(() => () => void delete document.documentElement.dataset.jogo, []);
 
   // pausa sozinho quando a aba some
   useEffect(() => {
@@ -321,7 +333,8 @@ export default function JogoCobra() {
           passo();
         }
       }
-      const alfa = j.estado === "jogando" ? Math.min(1, j.acumulado / intervalo()) : 1;
+      // o desenho completa o passo na primeira metade da batida: a cobra parece mais ágil
+      const alfa = j.estado === "jogando" ? Math.min(1, j.acumulado / (intervalo() * 0.55)) : 1;
 
       ctx.save();
       if (j.tremor > 0) {
@@ -456,18 +469,18 @@ export default function JogoCobra() {
 
           {estado !== "jogando" && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/80 p-4">
-              <div className="caixa max-w-md p-6 text-center">
+              <div className="caixa max-w-md p-4 text-center sm:p-6">
                 {estado === "inicio" && (
                   <>
-                    <p className="font-mao text-4xl">Cobrinha das letras</p>
-                    <p className="mt-3 text-cinza">
+                    <p className="font-mao text-3xl sm:text-4xl">Cobrinha das letras</p>
+                    <p className="mt-3 text-sm text-cinza sm:text-base">
                       Coma as letras <strong className="text-tinta">na ordem</strong> para formar a palavra. Letra errada custa uma vida.
                       Parede ou o próprio corpo, fim de jogo.
                     </p>
                     <button onClick={comecar} className="botao-laranja mt-5">
                       <Play className="h-5 w-5" weight="bold" /> Jogar
                     </button>
-                    <p className="mt-3 text-xs text-cinza">Enter para começar · setas ou WASD · espaço pausa</p>
+                    <p className="mt-3 hidden text-xs text-cinza sm:block">Enter para começar · setas ou WASD · espaço pausa</p>
                   </>
                 )}
                 {estado === "pausado" && (

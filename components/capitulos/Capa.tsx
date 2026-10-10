@@ -26,7 +26,7 @@ export default function Capa() {
         <CobraTitulo linhas={["Olá, mundo!", "Eu sou o Weuden"]} className="text-5xl text-tinta sm:text-7xl lg:text-8xl" />
       </div>
 
-      <p className="mt-8 font-mao text-2xl leading-snug sm:text-4xl">
+      <p className="mt-8 min-h-[2.75em] font-mao text-2xl leading-snug sm:text-4xl md:min-h-0">
         Eu crio <Digitando frases={oQueEuCrio} className="text-laranja-texto" />
       </p>
       <p className="mt-3 max-w-2xl text-lg text-cinza sm:text-xl">

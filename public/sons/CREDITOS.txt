@@ -1,0 +1,22 @@
+Efeitos sonoros do site
+
+Todos vêm do Pixabay (https://pixabay.com/pt/sound-effects/), sob a Licença de Conteúdo do Pixabay:
+uso livre, inclusive comercial, sem obrigação de dar crédito. Mesmo assim, fica aqui a origem de cada um.
+Os arquivos foram recortados, convertidos para mono e com o volume igualado.
+
+certo-1.mp3: "8-Bit Retro Coin", de KRNBEATZ. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-8-bit-retro-coin-584191/
+clique-1.mp3: "UI click", de freesound_community. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-ui-click-43196/
+colar-1.mp3: "sliding paper on table", de freesound_community. https://pixabay.com/pt/sound-effects/dom%C3%A9stico-sliding-paper-on-table-7034/
+embaralhar-1.mp3: "Shuffling Deck of Cards", de OxidVideos. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-shuffling-deck-of-cards-522518/
+errado-1.mp3: "Quiz Game Show Pack", de Liecio. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-quiz-game-show-pack-190031/
+fim-1.mp3: "Videogame Death Sound", de freesound_community. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-videogame-death-sound-43894/
+mordida-1.mp3: "Crunchy Bite", de Makigai_MaiMai. https://pixabay.com/pt/sound-effects/crunchy-bite-450650/
+mordida-2.mp3: "Crunchy Bite", de Makigai_MaiMai. https://pixabay.com/pt/sound-effects/crunchy-bite-450650/
+palavra-1.mp3: "Level Up 05", de Universfield. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-level-up-05-326133/
+pop-1.mp3: "Pop Cartoon", de KoiRoylers. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-pop-cartoon-357572/
+rasgo-1.mp3: "Paper paper tearing tear paper hartie rupta", de autor não informado. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-paper-paper-tearing-tear-paper-hartie-rupta-494202/
+rasgo-2.mp3: "Paper Rip Fast", de TanwerAman. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-paper-rip-fast-252617/
+rasgo-3.mp3: "Tear a Paper", de CreatorsHome. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-tear-a-paper-328149/
+risco-1.mp3: "Pencil Scribbling", de VoiceBosch. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-pencil-scribbling-200560/
+whoosh-1.mp3: "Simple Whoosh", de DRAGON-STUDIO. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-simple-whoosh-382724/
+whoosh-2.mp3: "Whoosh Effect", de DRAGON-STUDIO. https://pixabay.com/pt/sound-effects/filme-e-efeitos-especiais-whoosh-effect-405447/

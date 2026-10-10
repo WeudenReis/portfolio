@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 const redes = [
   { label: "GitHub", href: contato.github, Icone: IconeGithub, user: "WeudenReis" },
   { label: "LinkedIn", href: contato.linkedin, Icone: IconeLinkedin, user: "Weuden dos Reis" },
-  { label: "Instagram", href: contato.instagram, Icone: IconeInstagram, user: "@weudenreis" },
+  { label: "Instagram", href: contato.instagram, Icone: IconeInstagram, user: "@weudenx" },
   { label: "Vortexi", href: contato.vortexi, Icone: IconeVortexi, user: "vortexi.com.br" },
 ];
 
@@ -26,7 +26,8 @@ export default function PaginaContato() {
         <MarcaTexto>Me manda um postal</MarcaTexto>
       </h1>
       <p className="mt-6 max-w-3xl text-lg leading-relaxed sm:text-xl">
-        Escreve aí embaixo que o seu e-mail abre com tudo preenchido. Respondo <Riscado>quando der</Riscado> rapidinho.
+        Escreva o recado no cartão aqui embaixo. Quando você mandar, o seu e-mail abre com tudo preenchido, é só conferir e
+        enviar. Eu respondo <Riscado>quando der</Riscado> rapidinho.
       </p>
 
       <div className="mt-12 grid gap-10 lg:grid-cols-[3fr_2fr]">

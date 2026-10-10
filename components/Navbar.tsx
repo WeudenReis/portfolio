@@ -75,7 +75,7 @@ export default function Navbar() {
         >
           {paginas.map((p) => (
             <li key={p.href} className="border-b-2 border-dashed border-tinta/20 last:border-0">
-              <Link href={p.href} className="block py-3" aria-current={ehAtual(p.href) ? "page" : undefined}>
+              <Link href={p.href} className="block py-3" aria-current={ehAtual(p.href) ? "page" : undefined} onClick={() => setAberto(false)}>
                 {ehAtual(p.href) ? <span className="marca marca-laranja marca-visivel">{p.nome}</span> : p.nome}
               </Link>
             </li>

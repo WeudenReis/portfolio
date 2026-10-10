@@ -13,6 +13,10 @@ export type Capitulo = { id: string; nome: string; fundo: string; conteudo: Reac
 // true dentro da cópia de baixo: componentes animados usam isso para não rodar duas vezes
 const CopiaContext = createContext(false);
 export const useEhCopia = () => useContext(CopiaContext);
+// true quando o capítulo é o que está à vista. Fora do Rasgo vale sempre true.
+// Riscado, marca-texto e animações esperam o capítulo aparecer para começar.
+const CapituloContext = createContext(true);
+export const useCapituloAtivo = () => useContext(CapituloContext);
 
 const PONTOS = 40;
 const PAUSA = 0.38; // fração da rolagem de cada capítulo em que ele fica parado antes de rasgar
@@ -36,10 +40,12 @@ const baixo = (ys: number[], d = 0) =>
 const linha = (ys: number[], d = 0) => ys.map((y, i) => `${xDe(i)},${y + d}`).join(" ");
 
 const suave = (t: number) => t * t * (3 - 2 * t);
+const limitar01 = (v: number) => Math.min(1, Math.max(0, v));
 
 export default function Rasgo({ capitulos }: { capitulos: Capitulo[] }) {
   const trilho = useRef<HTMLDivElement>(null);
   const palco = useRef<HTMLDivElement>(null);
+  const preenchimento = useRef<HTMLDivElement>(null);
   const [simples, setSimples] = useState(false);
   const [ativo, setAtivo] = useState(0);
   const n = capitulos.length;
@@ -50,82 +56,109 @@ export default function Rasgo({ capitulos }: { capitulos: Capitulo[] }) {
       setSimples(true);
       return;
     }
-    const folhas = [...palco.current!.querySelectorAll<HTMLElement>("[data-folha]")];
+    const elPalco = palco.current!;
+    const elTrilho = trilho.current!;
+    const elFill = preenchimento.current;
+    // tudo que o laço mexe fica guardado aqui, para não procurar no DOM a cada quadro
+    const folhas = [...elPalco.querySelectorAll<HTMLElement>("[data-folha]")].map((folha, i) => {
+      const ys = bordas.current[i];
+      return {
+        folha,
+        cima: folha.querySelector<HTMLElement>("[data-cima]"),
+        baixo: folha.querySelector<HTMLElement>("[data-baixo]"),
+        conteudo: folha.querySelector<HTMLElement>("[data-cima] > [data-conteudo]"),
+        recorte: cima(ys),
+        meio: ys.reduce((a, b) => a + b, 0) / ys.length,
+        ultimo: "", // último estado escrito, para só mexer no estilo quando mudar
+        rasgado: false,
+        somEm: 0,
+      };
+    });
     let ultimoAtivo = -1;
     let quadro = 0;
-    const rasgado = folhas.map(() => false); // para tocar o som só quando o rasgo começa
-    let primeira = true;
+    let sAnterior = -1;
+    let porTamanho = false;
 
     const atualizar = () => {
       quadro = 0;
-      const seg = palco.current!.offsetHeight;
-      const nav = palco.current!.getBoundingClientRect().top - trilho.current!.getBoundingClientRect().top;
-      const s = nav; // quanto já rolamos dentro do trilho
+      const seg = elPalco.offsetHeight;
+      const s = elPalco.getBoundingClientRect().top - elTrilho.getBoundingClientRect().top; // quanto já rolamos
+      // salto grande (link, recarregar no meio, redimensionar): ajusta sem tocar som
+      const salto = sAnterior < 0 || porTamanho || Math.abs(s - sAnterior) > seg * 0.5;
+      sAnterior = s;
+      porTamanho = false;
       let novoAtivo = 0;
+      let somDoQuadro: "rasgo" | "colar" | null = null;
+      const agora = performance.now();
 
-      folhas.forEach((folha, i) => {
-        const t = i === n - 1 ? 0 : Math.min(1, Math.max(0, (s - i * seg - PAUSA * seg) / ((1 - PAUSA) * seg)));
+      folhas.forEach((f, i) => {
+        const t = i === n - 1 ? 0 : limitar01((s - i * seg - PAUSA * seg) / ((1 - PAUSA) * seg));
         if (t >= 0.5) novoAtivo = i + 1;
         const comecou = t > 0.02;
-        if (comecou !== rasgado[i]) {
-          rasgado[i] = comecou;
-          if (!primeira) {
-            comecou ? som.rasgo() : som.colar();
+        if (comecou !== f.rasgado) {
+          f.rasgado = comecou;
+          if (!salto && agora - f.somEm > 600) {
+            f.somEm = agora;
+            somDoQuadro = comecou ? "rasgo" : somDoQuadro ?? "colar";
             window.dispatchEvent(new CustomEvent("rasgo:mudou", { detail: { i, comecou } }));
           }
         }
-        const e = suave(t);
-        const ys = bordas.current[i];
-        const meio = ys.reduce((a, b) => a + b, 0) / ys.length;
-
-        const fCima = folha.querySelector<HTMLElement>("[data-cima]");
-        const fBaixo = folha.querySelector<HTMLElement>("[data-baixo]");
-        const conteudo = folha.querySelector<HTMLElement>("[data-cima] > [data-conteudo]");
-        if (fCima && fBaixo && conteudo) {
-          const rasgando = t > 0;
-          conteudo.style.clipPath = rasgando ? cima(ys) : "none";
-          folha.style.setProperty("--rasgo", rasgando ? "1" : "0");
-          fBaixo.style.visibility = rasgando ? "visible" : "hidden";
-          fCima.style.transform = rasgando
-            ? `translate3d(0, ${-e * (meio + 8)}%, 0) rotate(${-e * 4}deg)`
-            : "";
-          fBaixo.style.transform = rasgando
-            ? `translate3d(0, ${e * (100 - meio + 8)}%, 0) rotate(${e * 3}deg)`
-            : "";
-        }
-        folha.style.visibility = t >= 1 ? "hidden" : "visible";
 
         // o capítulo de baixo vem "subindo" enquanto o de cima rasga
-        const anterior = i > 0 ? Math.min(1, Math.max(0, (s - (i - 1) * seg - PAUSA * seg) / ((1 - PAUSA) * seg))) : 1;
-        folha.style.transform = i > 0 && anterior < 1 ? `scale(${0.93 + 0.07 * suave(anterior)})` : "";
+        const anterior = i > 0 ? limitar01((s - (i - 1) * seg - PAUSA * seg) / ((1 - PAUSA) * seg)) : 1;
+        const escala = i > 0 && anterior < 1 ? 0.93 + 0.07 * suave(anterior) : 1;
+        const estado = `${t.toFixed(4)}|${escala.toFixed(4)}`;
+        if (estado === f.ultimo) return;
+        f.ultimo = estado;
+
+        const e = suave(t);
+        if (f.cima && f.baixo && f.conteudo) {
+          const rasgando = t > 0;
+          f.conteudo.style.clipPath = rasgando ? f.recorte : "none";
+          f.folha.style.setProperty("--rasgo", rasgando ? "1" : "0");
+          f.baixo.style.visibility = rasgando && t < 1 ? "visible" : "hidden";
+          f.cima.style.transform = rasgando ? `translate3d(0, ${-e * (f.meio + 8)}%, 0) rotate(${-e * 4}deg)` : "";
+          f.baixo.style.transform = rasgando ? `translate3d(0, ${e * (100 - f.meio + 8)}%, 0) rotate(${e * 3}deg)` : "";
+        }
+        f.folha.style.visibility = t >= 1 ? "hidden" : "visible";
+        f.folha.style.transform = escala < 1 ? `scale(${escala})` : "";
       });
 
-      primeira = false;
+      if (somDoQuadro === "rasgo") som.rasgo();
+      else if (somDoQuadro === "colar") som.colar();
+
+      // trilho dos pontinhos: enche conforme a rolagem
+      if (elFill) elFill.style.transform = `scaleY(${limitar01(s / ((n - 1) * seg))})`;
+
       if (novoAtivo !== ultimoAtivo) {
         ultimoAtivo = novoAtivo;
-        folhas.forEach((f, i) => (f.inert = i !== novoAtivo));
+        folhas.forEach((f, i) => (f.folha.inert = i !== novoAtivo));
         setAtivo(novoAtivo);
       }
     };
     const agendar = () => {
       if (!quadro) quadro = requestAnimationFrame(atualizar);
     };
+    const aoRedimensionar = () => {
+      porTamanho = true;
+      agendar();
+    };
     atualizar();
     window.addEventListener("scroll", agendar, { passive: true });
-    window.addEventListener("resize", agendar);
+    window.addEventListener("resize", aoRedimensionar);
     return () => {
       cancelAnimationFrame(quadro);
       window.removeEventListener("scroll", agendar);
-      window.removeEventListener("resize", agendar);
+      window.removeEventListener("resize", aoRedimensionar);
     };
   }, [n]);
 
   const irPara = (i: number) => {
-    const seg = palco.current!.offsetHeight;
-    const topo = trilho.current!.getBoundingClientRect().top + window.scrollY;
-    const nav = parseFloat(getComputedStyle(palco.current!).top) || 0;
-    const destino = i === 0 ? 0 : (i - 1) * seg + seg; // fim do rasgo do capítulo anterior
-    rolarPara(topo - nav + destino);
+    if (!palco.current || !trilho.current) return;
+    const seg = palco.current.offsetHeight;
+    const topo = trilho.current.getBoundingClientRect().top + window.scrollY;
+    const nav = parseFloat(getComputedStyle(palco.current).top) || 0;
+    rolarPara(topo - nav + i * seg); // i telas depois do começo = capítulo i inteiro à vista
   };
 
   if (simples) {
@@ -142,10 +175,7 @@ export default function Rasgo({ capitulos }: { capitulos: Capitulo[] }) {
 
   return (
     <div ref={trilho} className="relative" style={{ height: `calc(${n} * (100svh - var(--nav)))` }}>
-      <div
-        ref={palco}
-        className="sticky top-[var(--nav)] h-[calc(100svh-var(--nav))] overflow-hidden bg-tinta"
-      >
+      <div ref={palco} className="sticky top-[var(--nav)] h-[calc(100svh-var(--nav))] overflow-hidden bg-tinta">
         {capitulos.map((c, i) => {
           const ys = bordas.current[i];
           const ultimo = i === n - 1;
@@ -162,7 +192,7 @@ export default function Rasgo({ capitulos }: { capitulos: Capitulo[] }) {
               <div data-cima className="absolute inset-0 origin-[0%_60%] will-change-transform">
                 {!ultimo && <Fibra clip={cima(ys, 1.6)} />}
                 <div data-conteudo className={`absolute inset-0 overflow-hidden ${c.fundo}`}>
-                  {c.conteudo}
+                  <CapituloContext.Provider value={i === ativo}>{c.conteudo}</CapituloContext.Provider>
                 </div>
                 {!ultimo && <Linha pontos={linha(ys, 1.6)} />}
               </div>
@@ -176,7 +206,9 @@ export default function Rasgo({ capitulos }: { capitulos: Capitulo[] }) {
                 >
                   <Fibra clip={baixo(ys, -1.4)} />
                   <div className={`absolute inset-0 overflow-hidden ${c.fundo}`} style={{ clipPath: baixo(ys) }}>
-                    <CopiaContext.Provider value={true}>{c.conteudo}</CopiaContext.Provider>
+                    <CopiaContext.Provider value={true}>
+                      <CapituloContext.Provider value={i === ativo}>{c.conteudo}</CapituloContext.Provider>
+                    </CopiaContext.Provider>
                   </div>
                   <Linha pontos={linha(ys, -1.4)} />
                 </div>
@@ -185,23 +217,26 @@ export default function Rasgo({ capitulos }: { capitulos: Capitulo[] }) {
           );
         })}
 
-        {/* bolinhas de navegação entre capítulos */}
-        <nav
-          aria-label="Capítulos"
-          className="absolute right-3 top-1/2 z-[60] flex -translate-y-1/2 flex-col gap-3 sm:right-5"
-        >
-          {capitulos.map((c, i) => (
-            <button
-              key={c.id}
-              onClick={() => irPara(i)}
-              aria-label={c.nome}
-              aria-current={i === ativo ? "step" : undefined}
-              title={c.nome}
-              className={`h-3.5 w-3.5 rounded-full border-[2.5px] border-tinta transition-all ${
-                i === ativo ? "scale-125 bg-laranja" : "bg-white hover:bg-laranja-claro"
-              }`}
-            />
-          ))}
+        {/* pontinhos de navegação, num trilho que vai enchendo conforme a rolagem */}
+        <nav aria-label="Capítulos" className="absolute right-3 top-1/2 z-[60] -translate-y-1/2 sm:right-5">
+          <div className="relative flex flex-col gap-4">
+            <span className="absolute bottom-[7px] left-1/2 top-[7px] w-[3px] -translate-x-1/2 rounded-full bg-white/70" aria-hidden="true" />
+            <span className="absolute bottom-[7px] left-1/2 top-[7px] w-[3px] -translate-x-1/2 overflow-hidden rounded-full" aria-hidden="true">
+              <span ref={preenchimento} className="block h-full w-full origin-top scale-y-0 bg-laranja" />
+            </span>
+            {capitulos.map((c, i) => (
+              <button
+                key={c.id}
+                onClick={() => irPara(i)}
+                aria-label={c.nome}
+                aria-current={i === ativo ? "step" : undefined}
+                title={c.nome}
+                className={`relative h-3.5 w-3.5 rounded-full border-[2.5px] border-tinta transition-all ${
+                  i === ativo ? "scale-125 bg-laranja" : i < ativo ? "bg-laranja-claro" : "bg-white hover:bg-laranja-claro"
+                }`}
+              />
+            ))}
+          </div>
         </nav>
       </div>
     </div>
@@ -211,11 +246,7 @@ export default function Rasgo({ capitulos }: { capitulos: Capitulo[] }) {
 // tira branca de papel que aparece na beirada do rasgo
 function Fibra({ clip }: { clip: string }) {
   return (
-    <div
-      className="absolute inset-0 bg-[#fffdf8] opacity-[var(--rasgo,0)]"
-      style={{ clipPath: clip }}
-      aria-hidden="true"
-    />
+    <div className="absolute inset-0 bg-[#fffdf8] opacity-[var(--rasgo,0)]" style={{ clipPath: clip }} aria-hidden="true" />
   );
 }
 

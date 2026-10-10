@@ -101,7 +101,7 @@ export default function ProjetosDestaque() {
         </div>
       </div>
 
-      <Link href="/projetos" className="mt-6 self-start font-bold underline decoration-2 underline-offset-4 hover:text-white">
+      <Link href="/projetos" className="relative z-40 mt-10 self-start font-bold underline decoration-2 underline-offset-4 hover:text-white">
         Ver todos os {projetos.length} projetos
       </Link>
     </div>

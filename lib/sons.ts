@@ -1,8 +1,11 @@
 "use client";
 
-// Sons do site, todos gerados na hora com Web Audio (nenhum arquivo de áudio).
-// O navegador só libera áudio depois do primeiro clique ou tecla, então o contexto nasce aí.
-// A preferência de som fica no localStorage ("sons" = "off" desliga).
+// Sons do site. Os efeitos de verdade vêm do Pixabay (licença livre, origem de cada um em
+// public/sons/CREDITOS.txt) e ficam em public/sons. O navegador só libera áudio num clique ou tecla
+// de verdade, então o contexto nasce aí e os arquivos são baixados logo em seguida. Enquanto um arquivo
+// não carregou (ou se falhar), toca uma versão sintetizada com Web Audio. Com o áudio ainda travado,
+// nenhum som fica na fila: ele simplesmente não toca.
+// A preferência fica no localStorage ("sons" = "off" desliga).
 
 let ctx: AudioContext | null = null;
 let ruido: AudioBuffer | null = null;
@@ -30,25 +33,93 @@ export function alternarSom() {
   if (ligado) som.clique();
 }
 
+// ---------- arquivos ----------
+const ARQUIVOS = [
+  "rasgo-1", "rasgo-2", "rasgo-3", "colar-1", "mordida-1", "mordida-2", "clique-1", "whoosh-1", "whoosh-2",
+  "certo-1", "errado-1", "palavra-1", "fim-1", "embaralhar-1", "risco-1", "pop-1",
+];
+const buffers = new Map<string, AudioBuffer>();
+let carregando = false;
+
+function inverter(b: AudioBuffer) {
+  const r = ctx!.createBuffer(b.numberOfChannels, b.length, b.sampleRate);
+  for (let c = 0; c < b.numberOfChannels; c++) {
+    const de = b.getChannelData(c);
+    const para = r.getChannelData(c);
+    for (let i = 0; i < de.length; i++) para[i] = de[de.length - 1 - i];
+  }
+  return r;
+}
+
+async function carregarArquivos() {
+  if (carregando || !ctx) return;
+  carregando = true;
+  const c = ctx;
+  await Promise.all(
+    ARQUIVOS.map(async (n) => {
+      try {
+        const r = await fetch(`/sons/${n}.mp3`);
+        if (r.ok) buffers.set(n, await c.decodeAudioData(await r.arrayBuffer()));
+      } catch {}
+    }),
+  );
+  // fechar o modal = o whoosh de abrir tocado ao contrário
+  const w = buffers.get("whoosh-1");
+  if (w) buffers.set("whoosh-1-reverso", inverter(w));
+}
+
+// chamar só dentro de um clique ou tecla de verdade
 export function iniciarAudio() {
-  if (ctx || typeof window === "undefined") return;
+  if (typeof window === "undefined") return;
+  if (ctx) {
+    if (ctx.state === "suspended") ctx.resume().catch(() => {});
+    return;
+  }
   const AC = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
   if (!AC) return;
   ctx = new AC();
   saida = ctx.createGain();
-  saida.gain.value = 0.55;
+  saida.gain.value = 0.6;
   saida.connect(ctx.destination);
   ruido = ctx.createBuffer(1, ctx.sampleRate * 1.5, ctx.sampleRate);
   const d = ruido.getChannelData(0);
   for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  void carregarArquivos();
 }
 
+// só devolve o contexto se ele já estiver tocando; nunca agenda som num áudio travado
 const pronto = () => {
   if (!ligado || !ctx || !saida || document.hidden) return null;
-  if (ctx.state === "suspended") ctx.resume();
+  if (ctx.state !== "running") return null;
   return ctx;
 };
 
+// intervalo mínimo entre duas vezes do mesmo som, para não virar metralhadora
+const ultimaVez = new Map<string, number>();
+function podeTocar(nome: string, minimo: number) {
+  const agora = performance.now();
+  if (agora - (ultimaVez.get(nome) ?? -1e9) < minimo) return false;
+  ultimaVez.set(nome, agora);
+  return true;
+}
+
+// toca um dos arquivos da lista; devolve false se nenhum está pronto (aí entra o sintetizado)
+function tocar(nomes: string[], vol: number, variacao = 0) {
+  const c = pronto();
+  if (!c) return true; // áudio desligado ou travado: não toca nada, nem o sintetizado
+  const prontos = nomes.filter((n) => buffers.has(n));
+  if (!prontos.length) return false;
+  const s = c.createBufferSource();
+  s.buffer = buffers.get(prontos[Math.floor(Math.random() * prontos.length)])!;
+  if (variacao) s.playbackRate.value = 1 + (Math.random() * 2 - 1) * variacao;
+  const g = c.createGain();
+  g.gain.value = vol;
+  s.connect(g).connect(saida!);
+  s.start();
+  return true;
+}
+
+// ---------- sintetizados (reserva) ----------
 function tom(freq: number, dur: number, tipo: OscillatorType = "sine", vol = 0.2, ate?: number, atraso = 0) {
   const c = pronto();
   if (!c) return;
@@ -68,7 +139,7 @@ function tom(freq: number, dur: number, tipo: OscillatorType = "sine", vol = 0.2
 
 function chiado(dur: number, filtro: BiquadFilterType, de: number, ate: number, vol = 0.3, q = 1, atraso = 0) {
   const c = pronto();
-  if (!c || !ruido) return null;
+  if (!c || !ruido) return;
   const t = c.currentTime + atraso;
   const s = c.createBufferSource();
   s.buffer = ruido;
@@ -84,75 +155,74 @@ function chiado(dur: number, filtro: BiquadFilterType, de: number, ate: number, 
   s.connect(f).connect(g).connect(saida!);
   s.start(t, Math.random() * 0.5);
   s.stop(t + dur + 0.02);
-  return { g, t };
 }
 
-let ultimaMordida = 0;
-
 export const som = {
-  // papel rasgando: ruído com estalos irregulares subindo de frequência
+  // papel rasgando (3 rasgos diferentes, com variação de tom)
   rasgo(forca = 1) {
-    const c = pronto();
-    if (!c) return;
-    const dur = 0.55 + Math.random() * 0.2;
-    const r = chiado(dur, "bandpass", 700, 3200, 0.5 * forca, 0.9);
-    if (!r) return;
-    let t = r.t + 0.02;
-    while (t < r.t + dur - 0.02) {
-      const v = 0.08 + Math.random() * 0.5 * forca;
-      r.g.gain.setValueAtTime(v, t);
-      t += 0.008 + Math.random() * 0.03;
-      r.g.gain.setValueAtTime(v * 0.25, t);
-    }
-    r.g.gain.exponentialRampToValueAtTime(0.0001, r.t + dur);
-    chiado(0.12, "lowpass", 900, 300, 0.25 * forca, 1, dur * 0.85); // o "tum" do papel soltando
+    if (!podeTocar("rasgo", 250)) return;
+    if (!tocar(["rasgo-1", "rasgo-2", "rasgo-3"], 0.9 * forca, 0.06)) chiado(0.6, "bandpass", 700, 3200, 0.45 * forca, 0.9);
   },
   // o papel voltando a se juntar, mais baixinho
   colar() {
-    chiado(0.25, "bandpass", 2400, 600, 0.12, 1.2);
+    if (!podeTocar("colar", 250)) return;
+    if (!tocar(["colar-1"], 0.45)) chiado(0.25, "bandpass", 2400, 600, 0.12, 1.2);
   },
   mordida() {
-    const agora = performance.now();
-    if (agora - ultimaMordida < 45) return;
-    ultimaMordida = agora;
-    tom(520 + Math.random() * 160, 0.07, "sine", 0.18, 180);
-    chiado(0.04, "highpass", 3000, 2000, 0.08);
+    if (!podeTocar("mordida", 45)) return;
+    if (!tocar(["mordida-1", "mordida-2"], 0.32, 0.12)) tom(520 + Math.random() * 160, 0.07, "sine", 0.18, 180);
   },
   clique() {
-    chiado(0.025, "highpass", 2500, 1800, 0.12);
+    if (!podeTocar("clique", 40)) return;
+    if (!tocar(["clique-1"], 0.2, 0.05)) chiado(0.025, "highpass", 2500, 1800, 0.12);
   },
   certo() {
-    tom(660, 0.09, "triangle", 0.22);
-    tom(990, 0.12, "triangle", 0.22, undefined, 0.07);
+    if (!tocar(["certo-1"], 0.5)) {
+      tom(660, 0.09, "triangle", 0.22);
+      tom(990, 0.12, "triangle", 0.22, undefined, 0.07);
+    }
   },
   errado() {
-    tom(200, 0.22, "square", 0.08, 110);
+    if (!tocar(["errado-1"], 0.45)) tom(200, 0.22, "square", 0.08, 110);
   },
   palavra() {
-    [523, 659, 784, 1047].forEach((f, i) => tom(f, 0.16, "triangle", 0.2, undefined, i * 0.08));
+    if (!tocar(["palavra-1"], 0.55)) [523, 659, 784, 1047].forEach((f, i) => tom(f, 0.16, "triangle", 0.2, undefined, i * 0.08));
   },
   fim() {
-    [392, 330, 262, 196].forEach((f, i) => tom(f, 0.22, "triangle", 0.18, undefined, i * 0.12));
+    if (!tocar(["fim-1"], 0.55)) [392, 330, 262, 196].forEach((f, i) => tom(f, 0.22, "triangle", 0.18, undefined, i * 0.12));
   },
   abrir() {
-    chiado(0.22, "lowpass", 400, 2400, 0.16, 0.7);
+    if (!podeTocar("abrir", 200)) return;
+    if (!tocar(["whoosh-1"], 0.4)) chiado(0.22, "lowpass", 400, 2400, 0.16, 0.7);
   },
   fechar() {
-    chiado(0.18, "lowpass", 2200, 400, 0.12, 0.7);
+    if (!podeTocar("fechar", 200)) return;
+    if (!tocar(["whoosh-1-reverso"], 0.3)) chiado(0.18, "lowpass", 2200, 400, 0.12, 0.7);
   },
   embaralhar() {
-    chiado(0.18, "bandpass", 1600, 3800, 0.18, 1.5);
-    chiado(0.1, "bandpass", 2000, 1200, 0.12, 1.5, 0.12);
+    if (!podeTocar("embaralhar", 150)) return;
+    if (!tocar(["embaralhar-1"], 0.5, 0.05)) chiado(0.18, "bandpass", 1600, 3800, 0.18, 1.5);
   },
   pagina() {
-    tom(300, 0.25, "sine", 0.12, 900);
-    chiado(0.3, "bandpass", 600, 3000, 0.1, 0.8);
+    if (!podeTocar("pagina", 400)) return;
+    if (!tocar(["whoosh-2"], 0.5)) chiado(0.3, "bandpass", 600, 3000, 0.1, 0.8);
   },
   risco() {
-    chiado(0.35, "bandpass", 3000, 4200, 0.06, 4);
+    if (!podeTocar("risco", 300)) return;
+    if (!tocar(["risco-1"], 0.3, 0.05)) chiado(0.35, "bandpass", 3000, 4200, 0.06, 4);
   },
   tchau() {
-    tom(880, 0.08, "sine", 0.1, 1200);
-    tom(1200, 0.1, "sine", 0.1, 900, 0.1);
+    if (!podeTocar("tchau", 300)) return;
+    if (!tocar(["pop-1"], 0.45, 0.08)) tom(880, 0.08, "sine", 0.1, 1200);
+  },
+  // baque de algo caindo (bonequinho no chão, letra deitando)
+  tombo(forca = 0.6) {
+    if (!podeTocar("tombo", 120)) return;
+    tom(140, 0.14, "sine", 0.3 * forca, 55);
+    chiado(0.09, "lowpass", 900, 220, 0.25 * forca);
+  },
+  // toquinho seco, uma letra batendo na outra no dominó
+  toc() {
+    if (!tocar(["clique-1"], 0.25, 0.25)) tom(1300 + Math.random() * 300, 0.035, "triangle", 0.07);
   },
 };

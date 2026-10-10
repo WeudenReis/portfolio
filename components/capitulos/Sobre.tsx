@@ -3,7 +3,8 @@ import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import MarcaTexto from "../MarcaTexto";
 import Riscado from "../Riscado";
 
-const T = ({ children }: { children: React.ReactNode }) => <code className="termo">{children}</code>;
+// destaque no meio do texto: negrito com marca-texto só na metade de baixo, igual aos títulos
+const G = ({ children }: { children: React.ReactNode }) => <strong className="grifo">{children}</strong>;
 
 // capítulo 2: um cartão-postal neobrutalista
 export default function Sobre() {
@@ -32,12 +33,11 @@ export default function Sobre() {
             <MarcaTexto>Sobre mim</MarcaTexto>
           </h2>
           <p className="mt-5 text-base leading-relaxed sm:text-lg">
-            Sou estudante de <T>Software Engineer</T> e trabalho no <T>chatPro</T>, plataforma de atendimento e vendas pelo
-            WhatsApp. Não fico só <Riscado>apagando incêndio</Riscado> no suporte: crio as ferramentas que deixam o time mais
-            rápido.
+            Estudo Engenharia de Software e trabalho no <G>chatPro</G>, uma plataforma de atendimento e vendas pelo WhatsApp.
+            Lá eu não fico só <Riscado>apagando incêndio</Riscado> no suporte: crio as ferramentas que deixam o time mais rápido.
           </p>
           <p className="mt-3 text-base leading-relaxed sm:text-lg">
-            Fora dali, toco a <T>Vortexi</T> e desenvolvo produtos próprios com <T>Next.js e Supabase</T>.
+            Fora dali, toco a <G>Vortexi</G> com o meu sócio e tiro ideias do papel com Next.js e Supabase.
           </p>
           <div className="mt-6 flex items-center justify-between gap-4 border-t-2 border-dashed border-tinta/30 pt-4">
             <span className="font-mao text-xl">Weuden</span>

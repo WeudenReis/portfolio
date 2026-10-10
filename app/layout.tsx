@@ -8,6 +8,7 @@ import ModalPreview from "@/components/PreviewProjeto";
 import { SonsGlobais } from "@/components/Sons";
 import RolagemLenta from "@/components/RolagemLenta";
 import Mascote from "@/components/Mascote";
+import BarraProgresso from "@/components/BarraProgresso";
 import "./globals.css";
 
 const geist = Geist({
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Pular para o conteúdo
         </a>
         <Navbar />
+        <BarraProgresso />
         <main id="conteudo" className="overflow-x-clip">
           {children}
         </main>

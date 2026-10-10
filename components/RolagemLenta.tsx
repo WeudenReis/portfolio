@@ -9,7 +9,8 @@ import { useEffect } from "react";
 // cobrinha, troca de página) são respeitadas: o alvo se ajusta à posição real.
 
 const VEL_MAX = 1000; // px por segundo
-const SUAVE = 0.1; // fração do caminho que falta percorrida a cada quadro (60 fps), antes do limite
+const ACEL = 5200; // px/s²: arranca e freia suave, sem tranco
+const GANHO = 7; // velocidade desejada = distância que falta × GANHO (chega devagarinho no fim)
 const PASSO_RODA = 0.5; // quanto vale cada movimento da roda
 const FOLGA = 0.85; // o alvo fica no máximo a 85% de uma tela da posição atual
 
@@ -24,41 +25,50 @@ export default function RolagemLenta() {
     let alvo = atual;
     let meu = atual; // última posição que eu mesmo coloquei
     let quadro = 0;
-    let anterior = 0;
+    let anterior = -1;
+    let vel = 0;
 
     const maximo = () => document.documentElement.scrollHeight - window.innerHeight;
     const limitar = (y: number) => Math.max(0, Math.min(maximo(), y));
     const perto = (y: number) => Math.max(atual - window.innerHeight * FOLGA, Math.min(atual + window.innerHeight * FOLGA, y));
 
     const animar = (t: number) => {
-      const dt = Math.min(0.05, (t - anterior) / 1000) || 1 / 60;
+      // o horário do quadro pode vir antes do momento em que a rolagem começou: nunca deixa o
+      // intervalo ficar negativo (isso dava um tranquinho para trás no começo de cada rolagem)
+      const dt = anterior < 0 ? 1 / 60 : Math.min(0.05, Math.max(1 / 240, (t - anterior) / 1000));
       anterior = t;
       alvo = limitar(alvo);
       const dif = alvo - atual;
-      if (Math.abs(dif) < 0.6) {
+      if (Math.abs(dif) < 0.5 && Math.abs(vel) < 20) {
         atual = alvo;
+        vel = 0;
         window.scrollTo(0, atual);
         meu = window.scrollY;
         quadro = 0;
         return;
       }
-      let passo = dif * (1 - Math.pow(1 - SUAVE, dt * 60));
-      const limite = VEL_MAX * dt;
-      passo = Math.max(-limite, Math.min(limite, passo));
-      atual += passo;
+      const desejada = Math.max(-VEL_MAX, Math.min(VEL_MAX, dif * GANHO));
+      const maxDv = ACEL * dt;
+      vel += Math.max(-maxDv, Math.min(maxDv, desejada - vel));
+      atual += vel * dt;
+      if ((dif > 0 && atual > alvo) || (dif < 0 && atual < alvo)) {
+        atual = alvo; // não passa do ponto
+        vel = 0;
+      }
       window.scrollTo(0, atual);
       meu = window.scrollY;
       quadro = requestAnimationFrame(animar);
     };
     const andar = () => {
       if (!quadro) {
-        anterior = performance.now();
+        anterior = -1;
         quadro = requestAnimationFrame(animar);
       }
     };
     const parar = () => {
       if (quadro) cancelAnimationFrame(quadro);
       quadro = 0;
+      vel = 0;
     };
 
     // alguém rolou por fora de mim: sigo a posição real
@@ -123,7 +133,7 @@ export default function RolagemLenta() {
     const aoTocar = (e: TouchEvent) => {
       toque = null;
       if (e.touches.length !== 1 || bloqueado()) return;
-      if ((e.target as Element).closest("input, textarea, select, canvas, [data-rolagem-nativa], [role='application']")) return;
+      if ((e.target as Element).closest("input, textarea, select, canvas, .mascote, [data-rolagem-nativa], [role='application']")) return;
       const p = e.touches[0];
       parar();
       atual = alvo = meu = window.scrollY;

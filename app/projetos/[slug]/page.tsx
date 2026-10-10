@@ -77,6 +77,23 @@ export default async function PaginaProjeto({ params }: { params: Promise<{ slug
         </section>
       </div>
 
+      {/* depoimento: como foi fazer, contado por mim */}
+      <section className="mt-12">
+        <h2 className="font-mao text-3xl">
+          <MarcaTexto>Como foi fazer</MarcaTexto>
+        </h2>
+        <figure className="relative mt-5 rotate-[-0.6deg] rounded-xl border-[3px] border-tinta bg-laranja-claro p-6 shadow-brutal sm:p-8">
+          <img
+            src="/profile.jpg"
+            alt=""
+            aria-hidden="true"
+            className="absolute -right-3 -top-4 h-14 w-12 rotate-3 border-[3px] border-dashed border-tinta bg-white object-cover p-0.5"
+          />
+          <blockquote className="pr-8 text-lg leading-relaxed">{p.bastidores}</blockquote>
+          <figcaption className="mt-4 font-mao text-xl">Weuden</figcaption>
+        </figure>
+      </section>
+
       <section className="mt-10">
         <h2 className="font-mao text-3xl">
           <MarcaTexto>Destaques</MarcaTexto>

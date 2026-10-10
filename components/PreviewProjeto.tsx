@@ -36,10 +36,7 @@ export default function ModalPreview() {
       d.showModal();
       som.abrir();
     }
-    if (!slug && d.open) {
-      d.close();
-      som.fechar();
-    }
+    if (!slug && d.open) d.close();
   }, [slug]);
 
   const i = projetos.findIndex((p) => p.slug === slug);
@@ -49,7 +46,10 @@ export default function ModalPreview() {
   return (
     <dialog
       ref={dialogo}
-      onClose={() => setSlug(null)}
+      onClose={() => {
+        som.fechar(); // o close dispara em todo jeito de fechar: X, clique fora, Esc, link
+        setSlug(null);
+      }}
       onClick={(e) => e.target === dialogo.current && setSlug(null)}
       onKeyDown={(e) => {
         if (e.key === "ArrowRight") mover(1);

@@ -9,7 +9,9 @@
 
 html {
   scroll-padding-top: calc(var(--nav) + 1rem);
+  scrollbar-width: none; /* sem a barra lateral: o progresso aparece nos pontinhos e na barrinha laranja */
 }
+html::-webkit-scrollbar { display: none; }
 
 body {
   background: #ffffff;
@@ -48,6 +50,15 @@ body {
   .termo {
     @apply rounded-md border-2 border-tinta bg-laranja-claro px-1.5 py-px
       font-mono text-[0.85em] font-semibold text-laranja-texto;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  /* destaque no meio do texto: negrito com marca-texto só na metade de baixo */
+  .grifo {
+    @apply font-bold text-tinta;
+    background-image: linear-gradient(176deg, transparent 56%, #ffd9bf 56%, #ffd9bf 92%, transparent 92%);
+    padding: 0 0.1em;
     -webkit-box-decoration-break: clone;
     box-decoration-break: clone;
   }
@@ -102,12 +113,11 @@ body {
   stroke-width: 2.6;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
-  transition: stroke-dashoffset 0.5s ease-out;
 }
 .riscado path + path { stroke: #c2410c; stroke-width: 1.8; }
-.riscado path.riscado-desenhado { stroke-dashoffset: 0; }
+/* o risco é revelado por recorte, então não corta em palavras compridas */
+.riscado svg { clip-path: inset(-20% 100% -20% 0); transition: clip-path 0.55s ease-out; }
+.riscado-visivel svg { clip-path: inset(-20% 0 -20% 0); }
 
 /* ---------- texto digitando ---------- */
 .digitando-cursor {
@@ -154,7 +164,7 @@ body {
 .logo-tchau .lt-menor { transform-origin: 12px 50px; animation: lt-menor 7s ease-in-out infinite; }
 .logo-tchau .lt-barra { transform-origin: 50px 50px; animation: lt-barra 7s ease-in-out infinite; }
 .logo-tchau .lt-maior { transform-origin: 88px 50px; animation: lt-maior 7s ease-in-out infinite; }
-.logo-tchau .lt-cabeca { transform-origin: 50px 27px; animation: lt-cabeca 7s ease-in-out infinite; }
+.logo-tchau .lt-cabeca { transform-origin: 50px 22px; opacity: 0; animation: lt-cabeca 7s ease-in-out infinite; }
 .logo-tchau .lt-bracos { transform-origin: 50px 52px; animation: lt-bracos 7s ease-in-out infinite; }
 
 @keyframes lt-menor {
@@ -165,7 +175,7 @@ body {
 @keyframes lt-barra {
   0%, 18%, 92%, 100% { transform: translate(0px, 0px) scale(1, 1) rotate(0deg); }
   25%, 86% { transform: translate(0px, 0px) scale(1, 1) rotate(8deg); }
-  33%, 80% { transform: translate(0px, 6px) scale(1, 0.55) rotate(-16deg); }
+  33%, 80% { transform: translate(0px, 4px) scale(1, 0.62) rotate(-16deg); }
 }
 @keyframes lt-maior {
   0%, 18%, 92%, 100% { transform: translate(0px, 0px) rotate(0deg) scale(1); }
@@ -179,23 +189,27 @@ body {
 }
 @keyframes lt-bracos {
   0%, 34%, 78%, 100% { transform: rotate(0deg); }
-  40%, 52%, 64% { transform: rotate(14deg); }
-  46%, 58%, 70% { transform: rotate(-10deg); }
+  40%, 52%, 64% { transform: rotate(12deg); }
+  46%, 58%, 70% { transform: rotate(-8deg); }
   75% { transform: rotate(4deg); }
 }
 
 /* ---------- o bonequinho </> que acompanha a leitura (components/Mascote.tsx) ---------- */
-.mascote { pointer-events: auto; cursor: pointer; overflow: visible; }
+/* só os traços e a área de pegar recebem o mouse; o resto do quadrado deixa o clique passar */
+.mascote { pointer-events: none; overflow: visible; }
+.mascote .m-alvo, .mascote line, .mascote circle { pointer-events: visiblePainted; cursor: grab; }
 .mascote line { fill: none; stroke: #1e1e1e; stroke-width: 6; stroke-linecap: round; }
 .mascote .m-tronco-contorno { stroke-width: 11; }
 .mascote .m-tronco { stroke: #ff7a33; stroke-width: 5.5; }
 .mascote .m-rosto { fill: #ff7a33; stroke: #1e1e1e; stroke-width: 4; }
 .mascote .m-olhos circle { fill: #1e1e1e; }
 .mascote .m-boca { fill: none; stroke: #1e1e1e; stroke-width: 2; stroke-linecap: round; }
+.mascote .m-boca-o { fill: #1e1e1e; opacity: 0; }
 .mascote g { transform-box: view-box; transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .mascote .m-braco { transform-origin: 30px 37px; }
 .mascote .m-perna { transform-origin: 30px 58px; }
 .mascote .m-cabeca { transform-origin: 30px 28px; }
+.mascote .m-olhar { transition: transform 0.15s ease-out; }
 .mascote .m-olhos { transform-origin: 30px 17px; transition: none; animation: m-piscar 4.2s infinite; }
 @keyframes m-piscar { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
 
@@ -228,6 +242,47 @@ body {
 .pose-espiando .m-braco-esq { transform: rotate(80deg); }
 .pose-espiando .m-braco-dir { animation: m-acenar 0.6s ease-in-out infinite alternate; }
 
+/* andando: pernas e braços alternando */
+.pose-andando .m-perna-esq, .pose-andando .m-braco-dir { animation: m-passo-a 0.36s ease-in-out infinite alternate; }
+.pose-andando .m-perna-dir, .pose-andando .m-braco-esq { animation: m-passo-b 0.36s ease-in-out infinite alternate; }
+@keyframes m-passo-a { from { transform: rotate(-14deg); } to { transform: rotate(18deg); } }
+@keyframes m-passo-b { from { transform: rotate(14deg); } to { transform: rotate(-18deg); } }
+
+/* empurrando: o corpo inclina (o svg gira) e os dois braços vão para a frente */
+.pose-empurrando .m-braco-dir { transform: rotate(-38deg); }
+.pose-empurrando .m-braco-esq { transform: rotate(-125deg); }
+.pose-empurrando .m-perna-esq { transform: rotate(24deg); }
+.pose-empurrando .m-perna-dir { transform: rotate(-6deg); }
+
+/* segurado: pendurado pela mão direita no cursor, se debatendo */
+.pose-segurado .m-braco-dir { transform: rotate(-100deg); transition: none; }
+.pose-segurado .m-braco-esq { animation: m-debater 0.5s ease-in-out infinite alternate; }
+.pose-segurado .m-perna-esq { animation: m-chutar-a 0.42s ease-in-out infinite alternate; }
+.pose-segurado .m-perna-dir { animation: m-chutar-b 0.42s ease-in-out infinite alternate; }
+@keyframes m-debater { from { transform: rotate(-20deg); } to { transform: rotate(30deg); } }
+@keyframes m-chutar-a { from { transform: rotate(-6deg); } to { transform: rotate(14deg); } }
+@keyframes m-chutar-b { from { transform: rotate(10deg); } to { transform: rotate(-12deg); } }
+
+/* voando depois de arremessado: braços para cima se debatendo */
+.pose-voando .m-braco-esq { animation: m-voar-a 0.25s ease-in-out infinite alternate; }
+.pose-voando .m-braco-dir { animation: m-voar-b 0.25s ease-in-out infinite alternate; }
+.pose-voando .m-perna-esq { transform: rotate(22deg); }
+.pose-voando .m-perna-dir { transform: rotate(-22deg); }
+@keyframes m-voar-a { from { transform: rotate(100deg); } to { transform: rotate(135deg); } }
+@keyframes m-voar-b { from { transform: rotate(-100deg); } to { transform: rotate(-135deg); } }
+
+/* tonto: sentado no chão depois do tombo, com a cabeça rodando */
+.pose-tonto .m-perna-esq { transform: rotate(60deg) scaleY(0.8); }
+.pose-tonto .m-perna-dir { transform: rotate(-60deg) scaleY(0.8); }
+.pose-tonto .m-braco-esq { transform: rotate(-35deg); }
+.pose-tonto .m-braco-dir { transform: rotate(35deg); }
+.pose-tonto .m-cabeca { animation: m-tonto 0.6s ease-in-out infinite alternate; }
+@keyframes m-tonto { from { transform: rotate(-12deg); } to { transform: rotate(12deg); } }
+
+/* boca de susto quando está no ar */
+.pose-segurado .m-boca, .pose-voando .m-boca { opacity: 0; }
+.pose-segurado .m-boca-o, .pose-voando .m-boca-o { opacity: 1; }
+
 @keyframes surgir {
   from { opacity: 0; transform: translateY(16px) scale(0.98); }
   to { opacity: 1; transform: none; }
@@ -236,5 +291,5 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .aceno, .digitando-cursor, .logo-tchau svg * { animation: none !important; }
   .marca { transition: none; }
-  .riscado path { transition: none; }
+  .riscado svg { transition: none; }
 }

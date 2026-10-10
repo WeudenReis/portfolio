@@ -1,7 +1,8 @@
 import { alemDoCodigo } from "@/lib/dados";
 import Titulo from "./Titulo";
 
-const T = ({ children }: { children: React.ReactNode }) => <code className="termo">{children}</code>;
+// destaque no meio do texto: negrito com marca-texto só na metade de baixo, igual aos títulos
+const G = ({ children }: { children: React.ReactNode }) => <strong className="grifo">{children}</strong>;
 
 export default function SobreMim() {
   return (
@@ -18,14 +19,13 @@ export default function SobreMim() {
           <Titulo>Sobre mim</Titulo>
           <div className="caixa space-y-4 p-6 text-lg leading-relaxed sm:p-8">
             <p>
-              Sou estudante de <T>Software Engineer</T>, e trabalho no <T>chatPro</T>, em Goiânia, plataforma de
-              atendimento e vendas pelo WhatsApp. Crio as ferramentas que deixam o time de suporte e de vendas mais
-              rápido: <T>extensões de navegador</T>, <T>automações de envio</T>, <T>transcrição de reuniões</T> e,
-              agora, <T>agentes de IA</T> que conversam com o lead.
+              Estudo Engenharia de Software e trabalho no <G>chatPro</G>, aqui em Goiânia, uma plataforma de atendimento e
+              vendas pelo WhatsApp. Crio as ferramentas que deixam o time de suporte e de vendas mais rápido: extensões de
+              navegador, automações de envio, transcrição de reuniões e, agora, <G>agentes de IA</G> que conversam com o lead.
             </p>
             <p>
-              Fora da chatPro, toco a <T>Vortexi</T>, onde faço sites e sistemas sob medida para empresas, e desenvolvo
-              produtos próprios com <T>Next.js, React, TypeScript e Supabase</T>.
+              Fora do chatPro, toco a <G>Vortexi</G> com o meu sócio, fazendo sites e sistemas sob medida para empresas, e
+              desenvolvo produtos próprios com Next.js, React, TypeScript e Supabase.
             </p>
             <p>
               Gosto de pegar um problema real da operação, entender o fluxo de quem usa e entregar a solução inteira:

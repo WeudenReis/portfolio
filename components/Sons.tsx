@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { SpeakerHigh, SpeakerSlash } from "@phosphor-icons/react/dist/ssr";
 import { alternarSom, aoMudarSom, iniciarAudio, som, somLigado } from "@/lib/sons";
 
-// Liga o áudio no primeiro gesto e dá um clique bem leve nos botões e links do site.
+// Liga o áudio no primeiro gesto de verdade e dá um clique bem leve nos botões e links do site.
+// Só eventos que o navegador aceita como ativação (tecla, mousedown, soltar o dedo, clique);
+// num pointerdown de toque o áudio nasceria travado.
+const GESTOS = ["keydown", "mousedown", "pointerup", "touchend", "click"] as const;
 export function SonsGlobais() {
   useEffect(() => {
     const gesto = () => iniciarAudio();
@@ -12,12 +15,10 @@ export function SonsGlobais() {
       const el = (e.target as HTMLElement).closest("a, button");
       if (el && !el.closest("[data-sem-clique]")) som.clique();
     };
-    window.addEventListener("pointerdown", gesto, { capture: true });
-    window.addEventListener("keydown", gesto, { capture: true });
+    GESTOS.forEach((g) => window.addEventListener(g, gesto, { capture: true }));
     document.addEventListener("click", clicar);
     return () => {
-      window.removeEventListener("pointerdown", gesto, { capture: true });
-      window.removeEventListener("keydown", gesto, { capture: true });
+      GESTOS.forEach((g) => window.removeEventListener(g, gesto, { capture: true }));
       document.removeEventListener("click", clicar);
     };
   }, []);
@@ -39,7 +40,7 @@ export function BotaoSom({ className = "" }: { className?: string }) {
       }}
       className={`botao h-9 w-9 justify-center p-0 ${className}`}
       aria-pressed={ligado}
-      aria-label={ligado ? "Desligar os sons" : "Ligar os sons"}
+      aria-label="Sons do site"
       title={ligado ? "Desligar os sons" : "Ligar os sons"}
       data-sem-clique
     >
