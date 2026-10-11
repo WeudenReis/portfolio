@@ -59,7 +59,7 @@ export default function JogoCobra() {
     cel: 24,
   });
 
-  const intervalo = () => Math.max(58, 125 - (jogo.current.nivel - 1) * 9);
+  const intervalo = () => Math.max(62, 150 - (jogo.current.nivel - 1) * 11);
 
   const atualizarHud = useCallback(() => {
     const j = jogo.current;
@@ -135,11 +135,6 @@ export default function JogoCobra() {
     if (d.x === -ultima.x && d.y === -ultima.y) return; // não dá meia-volta
     if (d.x === ultima.x && d.y === ultima.y) return;
     if (j.fila.length < 3) j.fila.push(d);
-    // resposta imediata: se já passou um pedaço do passo, anda agora em vez de esperar a próxima batida
-    if (j.fila.length === 1 && j.acumulado > intervalo() * 0.25) {
-      j.acumulado = 0;
-      passo();
-    }
   }, []);
 
   const pausar = useCallback(() => {
@@ -333,8 +328,7 @@ export default function JogoCobra() {
           passo();
         }
       }
-      // o desenho completa o passo na primeira metade da batida: a cobra parece mais ágil
-      const alfa = j.estado === "jogando" ? Math.min(1, j.acumulado / (intervalo() * 0.55)) : 1;
+      const alfa = j.estado === "jogando" ? Math.min(1, j.acumulado / intervalo()) : 1;
 
       ctx.save();
       if (j.tremor > 0) {
